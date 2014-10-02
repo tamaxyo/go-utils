@@ -40,6 +40,28 @@ func (l *Logger) Log(v ...interface{}) {
 	l.Printf("%s:%d: "+format(v)+"\n", append([]interface{}{filepath.Base(file), line}, v...)...)
 }
 
+// CheckFatal writes a log to the standard logger and exit the program if err is not nil.
+func CheckFatal(err error, v ...interface{}) {
+	if err != nil {
+		_, file, line, _ := runtime.Caller(1)
+		log.Fatalf("%s:%d: "+format(v)+" - %s\n", append(append([]interface{}{filepath.Base(file), line}, v...), err)...)
+	}
+}
+
+// CheckLog writes a log to the standard logger if err is not nil.
+func CheckLog(err error, v ...interface{}) {
+	if err != nil {
+		_, file, line, _ := runtime.Caller(1)
+		log.Printf("%s:%d: "+format(v)+" - %s\n", append(append([]interface{}{filepath.Base(file), line}, v...), err)...)
+	}
+}
+
+// Log writes a log to the standard logger.
+func Log(v ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+	log.Printf("%s:%d: "+format(v)+"\n", append([]interface{}{filepath.Base(file), line}, v...)...)
+}
+
 func format(v []interface{}) string {
 	if len(v) == 0 {
 		return ""
