@@ -9,7 +9,7 @@ import (
 )
 
 // ASSERT fails if condition is false
-func ASSERT(tb testing.TB, condition bool, msg string) {
+func ASSERT(tb testing.TB, msg string, condition bool) {
 	if !condition {
 		_, file, line, _ := runtime.Caller(1)
 		tb.Fatalf("%s: %d: %s\n\n", filepath.Base(file), line, msg)
