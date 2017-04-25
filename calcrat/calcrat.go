@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"regexp"
+	"strings"
 
 	"github.com/tamaxyo/go-utils/stack"
 )
@@ -132,6 +133,7 @@ func newLiteral(s string, variables Variables) (*literal, error) {
 	l := &literal{
 		v: new(big.Rat),
 	}
+	s = strings.TrimSpace(s)
 
 	// Check if literal is int to accept hex and octal literals
 	if _, ok := i.SetString(s, 0); ok {

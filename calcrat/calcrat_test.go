@@ -1,6 +1,7 @@
 package calcrat_test
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -258,4 +259,17 @@ func TestReturnsErrorWithUnknownVariable(t *testing.T) {
 	_, err = calcrat.Calc("one+two+four", vars)
 	ASSERT(t, "error should not be nil", err != nil)
 
+}
+
+func TestFormulaWithWhiteSpace(t *testing.T) {
+	vars := map[string]*big.Rat{
+		"one":   big.NewRat(100, 1),
+		"two":   big.NewRat(200, 1),
+		"three": big.NewRat(300, 1),
+	}
+	expected := big.NewRat(60100, 1)
+	actual, err := calcrat.Calc("one + two   *   three", vars)
+	fmt.Printf("%#v\n", actual)
+	EQUALS(t, "calc accepts formula with white space", 0, expected.Cmp(actual))
+	OK(t, err)
 }
