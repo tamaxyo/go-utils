@@ -128,7 +128,7 @@ type literal struct {
 	v *big.Rat
 }
 
-func newLiteral(s string, variables Variables) (*literal, error) {
+func newLiteral(s string, variables Variables, handler Handler) (*literal, error) {
 	i := new(big.Int)
 	l := &literal{
 		v: new(big.Rat),
@@ -150,6 +150,13 @@ func newLiteral(s string, variables Variables) (*literal, error) {
 		return l, nil
 	}
 
+	if handler != nil {
+		if v := handler(s); v != nil {
+			l.v = v
+			return l, nil
+		}
+	}
+
 	return nil, fmt.Errorf("could not parse string as rational - %s", s)
 }
 
@@ -158,7 +165,7 @@ func (l *literal) val() *big.Rat {
 }
 
 // Calc returns the calculated rational value from given formula with given variables
-func Calc(formula string, variables Variables) (*big.Rat, error) {
+func Calc(formula string, variables Variables, handler Handler) (*big.Rat, error) {
 	re := regexp.MustCompile("\\(|\\)|\\+|-|\\*|/|[^\\(\\)\\+\\-\\*/]+")
 	tokens := re.FindAllString(formula, -1)
 
@@ -184,7 +191,7 @@ func Calc(formula string, variables Variables) (*big.Rat, error) {
 			}
 			opStack.Push(op)
 		default:
-			l, err := newLiteral(token, variables)
+			l, err := newLiteral(token, variables, handler)
 			if err == nil {
 				nodeStack.Push(l)
 			} else {
