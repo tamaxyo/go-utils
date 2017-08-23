@@ -34,6 +34,9 @@ var opMap map[string]func() operator = map[string]func() operator{
 	"-": newSub,
 	"*": newMul,
 	"/": newDiv,
+	"&": newBitwiseAnd,
+	"|": newBitwiseOr,
+	"^": newBitwiseXor,
 }
 
 type opBase struct {
@@ -124,6 +127,57 @@ func (op *div) val() *big.Rat {
 	return v.Mul(op.left.val(), inv.Inv(op.right.val()))
 }
 
+// bitwiseAnd represents bitwise AND (&) operator.
+// bitwiseAnd casts operands to uint64, so that incorrect value will be returned unless operands are uint64 compatible
+type bitwiseAnd struct {
+	*opBase
+}
+
+func newBitwiseAnd() operator {
+	return &bitwiseAnd{&opBase{high, nil, nil}}
+}
+
+func (op *bitwiseAnd) val() *big.Rat {
+	left := op.left.val().Num().Uint64() / op.left.val().Denom().Uint64()
+	right := op.right.val().Num().Uint64() / op.right.val().Denom().Uint64()
+	i := new(big.Int).SetUint64(left & right)
+	return new(big.Rat).SetInt(i)
+}
+
+// bitwiseOr represents bitwise OR (|) operator.
+// bitwiseOr casts operors to uint64, so that incorrect value will be returned unless operors are uint64 compatible
+type bitwiseOr struct {
+	*opBase
+}
+
+func newBitwiseOr() operator {
+	return &bitwiseOr{&opBase{low, nil, nil}}
+}
+
+func (op *bitwiseOr) val() *big.Rat {
+	left := op.left.val().Num().Uint64() / op.left.val().Denom().Uint64()
+	right := op.right.val().Num().Uint64() / op.right.val().Denom().Uint64()
+	i := new(big.Int).SetUint64(left | right)
+	return new(big.Rat).SetInt(i)
+}
+
+// bitwiseXor represents bitwise XOR (^) operatxor.
+// bitwiseXor casts operxors to uint64, so that incxorrect value will be returned unless operxors are uint64 compatible
+type bitwiseXor struct {
+	*opBase
+}
+
+func newBitwiseXor() operator {
+	return &bitwiseXor{&opBase{low, nil, nil}}
+}
+
+func (op *bitwiseXor) val() *big.Rat {
+	left := op.left.val().Num().Uint64() / op.left.val().Denom().Uint64()
+	right := op.right.val().Num().Uint64() / op.right.val().Denom().Uint64()
+	i := new(big.Int).SetUint64(left ^ right)
+	return new(big.Rat).SetInt(i)
+}
+
 type literal struct {
 	v *big.Rat
 }
@@ -166,7 +220,7 @@ func (l *literal) val() *big.Rat {
 
 // Calc returns the calculated rational value from given formula with given variables
 func Calc(formula string, variables Variables, handler Handler) (*big.Rat, error) {
-	re := regexp.MustCompile("\\(|\\)|\\+|-|\\*|/|[^\\(\\)\\+\\-\\*/]+")
+	re := regexp.MustCompile("\\(|\\)|\\+|-|\\*|/|&|\\||\\^|[^\\(\\)\\+\\-\\*/&\\|\\^]+")
 	tokens := re.FindAllString(formula, -1)
 
 	opStack := stack.NewStack()
@@ -174,15 +228,8 @@ func Calc(formula string, variables Variables, handler Handler) (*big.Rat, error
 	bracket := stack.NewStack()
 
 	for _, token := range tokens {
-		switch token {
-		case "(":
-			bracket.Push(opStack)
-			opStack = stack.NewStack()
-		case ")":
-			reduceBracket(opStack, nodeStack)
-			opStack = bracket.Pop().(*stack.Stack)
-		case "+", "-", "*", "/":
-			op := opMap[token]()
+		if fn, ok := opMap[token]; ok {
+			op := fn()
 			if f := opStack.Peek(); f != nil && op.cmp(f.(operator)) < 1 {
 				prev := opStack.Pop().(operator)
 				prev.setRight(nodeStack.Pop().(node))
@@ -190,7 +237,14 @@ func Calc(formula string, variables Variables, handler Handler) (*big.Rat, error
 				nodeStack.Push(prev)
 			}
 			opStack.Push(op)
-		default:
+		} else if token == "(" {
+			bracket.Push(opStack)
+			opStack = stack.NewStack()
+		} else if token == ")" {
+			reduceBracket(opStack, nodeStack)
+			opStack = bracket.Pop().(*stack.Stack)
+
+		} else {
 			l, err := newLiteral(token, variables, handler)
 			if err == nil {
 				nodeStack.Push(l)

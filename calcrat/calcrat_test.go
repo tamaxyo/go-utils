@@ -76,6 +76,27 @@ func TestCalcCanEvaluateDivOperationWithFractionResult(t *testing.T) {
 	OK(t, err)
 }
 
+func TestCalcCanEvaluateBitwiseAndOperation(t *testing.T) {
+	expected := big.NewRat(0xF0, 1)
+	actual, err := calcrat.Calc("0xFF&0xF0", nil, nil)
+	EQUALS(t, "calc can evaluate bitwise and operation", 0, expected.Cmp(actual))
+	OK(t, err)
+}
+
+func TestCalcCanEvaluateBitwiseOrOperation(t *testing.T) {
+	expected := big.NewRat(0xF0, 1)
+	actual, err := calcrat.Calc("0x0|0xF0", nil, nil)
+	EQUALS(t, "calc can evaluate bitwise or operation", 0, expected.Cmp(actual))
+	OK(t, err)
+}
+
+func TestCalcCanEvaluateBitwiseXorOperation(t *testing.T) {
+	expected := big.NewRat(0xAA, 1)
+	actual, err := calcrat.Calc("0xFF^0x55", nil, nil)
+	EQUALS(t, "calc can evaluate bitwise xor operation", 0, expected.Cmp(actual))
+	OK(t, err)
+}
+
 func TestCalcCanEvaluateAddOperationWhichContainsNamedValue(t *testing.T) {
 	var expected *big.Rat
 	var actual *big.Rat
@@ -127,6 +148,37 @@ func TestCalcCanEvaluateDivOperationWhichContainsNamedValue(t *testing.T) {
 	expected = big.NewRat(1, 600)
 	actual, err = calcrat.Calc("one/two/three", vars, nil)
 	EQUALS(t, "calc can evaluate add operation of named values", 0, expected.Cmp(actual))
+	OK(t, err)
+}
+
+func TestCalcCanEvaluateOperatorPriority(t *testing.T) {
+	var expected *big.Rat
+	var actual *big.Rat
+	var err error
+
+	expected = big.NewRat(10100, 1)
+	actual, err = calcrat.Calc("100+100*100", nil, nil)
+	EQUALS(t, "calc can evaluate mixed priority operation, add and mul", 0, expected.Cmp(actual))
+	OK(t, err)
+
+	expected = big.NewRat(101, 1)
+	actual, err = calcrat.Calc("100+100/100", nil, nil)
+	EQUALS(t, "calc can evaluate mixed priority operation, add and div", 0, expected.Cmp(actual))
+	OK(t, err)
+
+	expected = big.NewRat(0x10, 1)
+	actual, err = calcrat.Calc("0x1+0xFF&0x0F", nil, nil)
+	EQUALS(t, "calc can evaluate mixed priority operation, add and bitwise and", 0, expected.Cmp(actual))
+	OK(t, err)
+
+	expected = big.NewRat(0x1F0, 1)
+	actual, err = calcrat.Calc("0x100|0xF*16", nil, nil)
+	EQUALS(t, "calc can evaluate mixed priority operation, mul and bitwise or", 0, expected.Cmp(actual))
+	OK(t, err)
+
+	expected = big.NewRat(0xAF, 1)
+	actual, err = calcrat.Calc("0xFF^0x5*16", nil, nil)
+	EQUALS(t, "calc can evaluate mixed priority operation, mul and bitwise xor", 0, expected.Cmp(actual))
 	OK(t, err)
 }
 
