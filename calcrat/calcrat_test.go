@@ -1,7 +1,6 @@
 package calcrat_test
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -276,7 +275,6 @@ func TestFormulaWithWhiteSpace(t *testing.T) {
 	}
 	expected := big.NewRat(60100, 1)
 	actual, err := calcrat.Calc("one + two   *   three", vars, nil)
-	fmt.Printf("%#v\n", actual)
 	EQUALS(t, "calc accepts formula with white space", 0, expected.Cmp(actual))
 	OK(t, err)
 }
@@ -294,7 +292,6 @@ func TestHandler(t *testing.T) {
 		return nil
 	}
 	actual, err := calcrat.Calc("one + two   *   three", vars, h)
-	fmt.Printf("%#v\n", actual)
 	EQUALS(t, "calc accepts formula with white space", 0, expected.Cmp(actual))
 	OK(t, err)
 }
